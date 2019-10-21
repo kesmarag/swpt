@@ -4,7 +4,7 @@ import pywt
 import re
 import matplotlib.pyplot as plt
 plt.style.use(['seaborn'])
-# from pywt._thresholding import hard, soft
+from pywt._thresholding import hard, soft
 
 
 class SWPT(object):
@@ -17,6 +17,7 @@ class SWPT(object):
 
   def decompose(self, signal, entropy='shannon'):
     pth = ['']
+    self._signal = signal
     self._coeff_dict[''] = np.squeeze(signal)
     for l in range(self._max_level):
       pth_new = []
@@ -125,9 +126,22 @@ class SWPT(object):
     total_entropy = sum(best_entropy.values())
     sorted_x = sorted(best_entropy_fr.items(), key=lambda kv: kv[1])
     best_tree = []
+    sig_norm = np.linalg.norm(self._signal, 2) ** 2
     for x in sorted_x:
-      best_tree.append([x[0], x[1], best_entropy[x[0]]])
+      best_tree.append([x[0], x[1], np.linalg.norm(self._coeff_dict[x[0]],2)**2/(sig_norm*2**len(x[0])), best_entropy[x[0]]])
     return best_tree
+
+  def feature_extraction(self, best_tree, threshold=0.025):
+    feature_list = []
+    selected_subbands = []
+    for leaf in best_tree:
+      if leaf[2] >= threshold:
+        feature_list.append(self._coeff_dict[leaf[0]])
+        selected_subbands.append(leaf[0])
+    feature_matrix = np.abs(np.array(feature_list))
+    for i in range(feature_matrix.shape[0]):
+      feature_matrix[i, :] = feature_matrix[i, :]/np.linalg.norm(feature_matrix[i, :], 1) * feature_matrix.shape[1]
+    return 10 * np.log(feature_matrix + 1), selected_subbands
 
   def plot_best_basis(self):
     best_tree = self.best_basis()
@@ -143,7 +157,6 @@ class SWPT(object):
       p.append(c[2])
       # print(l)
       for ell in range(l):
-      # coeff.append(np.log(np.abs(self._coeff_dict[c[0]])/max(np.abs(self._coeff_dict[c[0]]))+1))
         coeff.append(np.abs(self._coeff_dict[c[0]]))
     coeff = np.array(coeff)
     print(best_tree)
@@ -158,15 +171,35 @@ class SWPT(object):
 
 if __name__ == '__main__':
   act = np.load('/home/kesmarag/Github/pscs-earthquakes/retreat_2019/act.npz')
-  # act = np.load('/home/kesmarag/Github/pscs-earthquakes/retreat_2019/sim1.npz')
+  sim = np.load('/home/kesmarag/Github/pscs-earthquakes/retreat_2019/sim1.npz')
   x = act['arr_0']
+  x = x[:,0]
+  # x = np.diff(x)
+  y = sim['arr_0']
+  y = y[:,0]
+  # y = np.diff(y)
+  # dx = np.abs(np.squeeze(y))
+  # plt.plot(dx)
+  # plt.show()
+  # exit(0)
   swpt = SWPT(max_level=7, wavelet='db4')
-  # swpt.decompose(x, 'log-entropy')
   swpt.decompose(x, 'shannon')
+  tree = swpt.best_basis()
+  print(tree)
+  fm, sc = swpt.feature_extraction(tree, 0.025)
+
+  plt.figure()
+  plt.pcolor(fm)
+  swpt.decompose(y, 'shannon')
+  fm, sc = swpt.feature_extraction(tree, 0.025)
+  plt.figure()
+  plt.pcolor(fm)
+  plt.show()
+  # swpt.decompose(x, 'shannon')
   # wp4 = swpt.get_level(4)
   # print(swpt._entropy_dict)
   # best = swpt.best_basis()
-  swpt.plot_best_basis()
+  # swpt.plot_best_basis()
   # plt.plot(swpt.get_coefficient_vector('AAAAAD'))
   # plt.plot(swpt.get_coefficient_vector('AAAAAAD'))
   # plt.plot(swpt.get_coefficient_vector('AAAADDA'))
