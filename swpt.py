@@ -89,7 +89,7 @@ class SWPT(object):
       return np.log(c ** 2 / np.linalg.norm(s, ord=2) ** 2 )
 
 
-  def best_basis(self):
+  def best_basis(self, threshold=0.0):
     best_entropy = {}
     best_entropy_fr = {}
     levels = self._max_level
@@ -129,15 +129,22 @@ class SWPT(object):
     sig_norm = np.linalg.norm(self._signal, 2) ** 2
     for x in sorted_x:
       best_tree.append([x[0], x[1], np.linalg.norm(self._coeff_dict[x[0]],2)**2/(sig_norm*2**len(x[0])), best_entropy[x[0]]])
-    return best_tree
+    if threshold > 0:
+      pass
+      best_tree_t = []
+      for leaf in best_tree:
+        if leaf[2] >= threshold:
+          best_tree_t.append(leaf)
+      return best_tree_t
+    else:
+      return best_tree
 
-  def feature_extraction(self, best_tree, threshold=0.025):
+  def feature_extraction(self, best_tree):
     feature_list = []
     selected_subbands = []
     for leaf in best_tree:
-      if leaf[2] >= threshold:
-        feature_list.append(self._coeff_dict[leaf[0]])
-        selected_subbands.append(leaf[0])
+      feature_list.append(self._coeff_dict[leaf[0]])
+      selected_subbands.append(leaf[0])
     feature_matrix = np.abs(np.array(feature_list))
     for i in range(feature_matrix.shape[0]):
       feature_matrix[i, :] = feature_matrix[i, :]/np.linalg.norm(feature_matrix[i, :], 1) * feature_matrix.shape[1]
@@ -187,13 +194,14 @@ if __name__ == '__main__':
   tree = swpt.best_basis()
   print(tree)
   fm, sc = swpt.feature_extraction(tree, 0.025)
-
   plt.figure()
   plt.pcolor(fm)
+  plt.colorbar()
   swpt.decompose(y, 'shannon')
   fm, sc = swpt.feature_extraction(tree, 0.025)
   plt.figure()
   plt.pcolor(fm)
+  plt.colorbar()
   plt.show()
   # swpt.decompose(x, 'shannon')
   # wp4 = swpt.get_level(4)
