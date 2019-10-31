@@ -29,8 +29,9 @@ class SWPT(object):
     
   def decompose(self, signal, entropy='shannon'):
     pth = ['']
-    self._signal = self._pre_decompose(signal, self._start_level)
-    self._coeff_dict[''] = np.squeeze(self._signal)
+    self._signal = signal
+    self._asignal = self._pre_decompose(signal, self._start_level)
+    self._coeff_dict[''] = np.squeeze(self._asignal)
     for l in range(self._max_level):
       pth_new = []
       for p in pth:
