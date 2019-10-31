@@ -11,7 +11,7 @@ class SWPT(object):
 
   def __init__(self, wavelet='db4', max_level=3, start_level=0):
     self._wavelet = wavelet
-    self._start_level = 0
+    self._start_level = start_level
     self._max_level = max_level - start_level
     self._coeff_dict = {}
     self._entropy_dict = {}
