@@ -9,16 +9,28 @@ from pywt._thresholding import hard, soft
 
 class SWPT(object):
 
-  def __init__(self, wavelet='db4', max_level=3):
+  def __init__(self, wavelet='db4', max_level=3, start_level=0):
     self._wavelet = wavelet
-    self._max_level = max_level
+    self._start_level = 0
+    self._max_level = max_level - start_level
     self._coeff_dict = {}
     self._entropy_dict = {}
 
+
+  def _pre_decompose(self, signal, a):
+    if a > 0:
+      coeff = pywt.swt(np.squeeze(signal),
+                       wavelet=self._wavelet,
+                       level=a)
+      print(coeff[0][0].shape)
+      return coeff[0][0]
+    else:
+      return signal
+    
   def decompose(self, signal, entropy='shannon'):
     pth = ['']
-    self._signal = signal
-    self._coeff_dict[''] = np.squeeze(signal)
+    self._signal = self._pre_decompose(signal, self._start_level)
+    self._coeff_dict[''] = np.squeeze(self._signal)
     for l in range(self._max_level):
       pth_new = []
       for p in pth:
@@ -35,10 +47,10 @@ class SWPT(object):
           self._entropy_dict[p_run + 'D'] = 0.0
           for c in C[0]:
             self._entropy_dict[p_run + 'A'] += self._get_entropy(c, signal, entropy)
-          self._entropy_dict[p_run + 'A'] = self._entropy_dict[p_run + 'A'] / 2 ** (len(p_run) + 2.0)
+          self._entropy_dict[p_run + 'A'] = self._entropy_dict[p_run + 'A'] / 2 ** (len(p_run) + 2.0 + self._start_level)
           for c in C[1]:
             self._entropy_dict[p_run + 'D'] += self._get_entropy(c, signal, entropy)
-          self._entropy_dict[p_run + 'D'] = self._entropy_dict[p_run + 'D'] / 2 ** (len(p_run) + 2.0)
+          self._entropy_dict[p_run + 'D'] = self._entropy_dict[p_run + 'D'] / 2 ** (len(p_run) + 2.0 + self._start_level)
           if i < len(coeff) - 1 and len(p_run) < self._max_level - 1:
             pth_new.append(p_run + 'D')
             p_run = p_run + 'A'
