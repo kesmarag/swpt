@@ -39,7 +39,7 @@ class SWPT(object):
             self._coeff_dict[p],
             wavelet=self._wavelet,
             level=self._max_level - len(p),
-            start_level=len(p))
+            start_level=len(p)+self._start_level)
         p_run = p
         for i, C in enumerate(coeff[::-1]):
           self._coeff_dict[p_run + 'A'] = C[0]
