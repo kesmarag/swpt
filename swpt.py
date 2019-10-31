@@ -141,7 +141,7 @@ class SWPT(object):
     best_tree = []
     sig_norm = np.linalg.norm(self._signal, 2) ** 2
     for x in sorted_x:
-      best_tree.append([x[0], x[1], np.linalg.norm(self._coeff_dict[x[0]],2)**2/(sig_norm*2**len(x[0]+self._start_level)), best_entropy[x[0]]])
+      best_tree.append([x[0], x[1], np.linalg.norm(self._coeff_dict[x[0]],2)**2/(sig_norm*2**(len(x[0])+self._start_level)), best_entropy[x[0]]])
     if threshold > 0:
       pass
       best_tree_t = []
